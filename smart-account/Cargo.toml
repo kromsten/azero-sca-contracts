@@ -1,0 +1,35 @@
+[package]
+name = "azero_smart_account"
+version    = "0.0.1"
+edition    = "2021"
+repository = "https://github.com/kromsten/azero-sca-contracts"
+authors    = ["kromsten <kromsten@megarock.labs>"]
+
+[dependencies]
+ink = { version = "4.3.0", default-features = false}
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.6", default-features = false, features = ["derive"] }
+openbrush = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features = [
+    "proxy", 
+    "upgradeable", 
+    "crypto", 
+    "ownable"
+]}
+
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = ["std"]
+std = [
+  "ink/std",
+  "scale/std",
+  "scale-info/std",
+  # OpenBrush dependency
+  "openbrush/std",
+]
+ink-as-dependency = []
+
+[profile.dev]
+codegen-units = 16
