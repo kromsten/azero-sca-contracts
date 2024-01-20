@@ -7,6 +7,7 @@
 pub mod smart_account_example {
   use openbrush::contracts::proxy;
   use openbrush::traits::Storage;
+use smart_account_auth::CredentialData;
   
   #[ink(storage)] // needed for the ink! contract storage struct
   // this will implement traits needed for OB standards to work with the contract storage struct

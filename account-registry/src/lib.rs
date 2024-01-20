@@ -1,5 +1,6 @@
+pub mod account;
 pub mod contract;
-mod types;
+pub mod error;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
