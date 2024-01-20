@@ -1,5 +1,5 @@
 use ink::primitives::AccountId;
-use smart_account_auth::{CredentialData, CredentialId};
+use smart_account_auth::{ensure, CredentialData, CredentialId};
 use crate::{contract::account_registry::RegistryContract, error::ContractError};
 
 
@@ -69,6 +69,7 @@ pub fn get_account(contract: &RegistryContract, creds: &CredentialData) -> Optio
 }
 
 
+
 pub fn account_exists(contract: &RegistryContract, creds: &CredentialData) -> bool {
     contract.accounts.get(&creds.primary_id()).is_some()
 }
@@ -78,45 +79,86 @@ pub fn credential_exists(contract: &RegistryContract, id: &CredentialId) -> bool
 }
 
 
-pub fn save_credentials(
-    contract:       &mut RegistryContract, 
-    primary_id:     &CredentialId,
-    credential_ids: &Vec<CredentialId>
-) -> Result<(), ContractError> {
 
-    let account_data = contract.accounts.get(primary_id);
-    if let None = account_data {
-        return Err(ContractError::AccountNotExist);
-    }
-
-    for id in credential_ids {
-        if let Some(_) = contract.credential_ids.get(&id) {
-            return  Err(ContractError::CredentialExists);
-        }
-        contract.credential_ids.insert(id, primary_id);
-    }
-    Ok(())
-}
-
-
-pub fn save_account(
+pub fn save_account_data(
     contract: &mut RegistryContract, 
     creds: &CredentialData,
     address: AccountId
 ) -> Result<(), ContractError> {
+    ensure!(contract.accounts.contains(&creds.primary_id()), ContractError::AccountExists);
 
-    contract.accounts.get(&creds.primary_id()).map(|data| data);
-    if let Some(_) = get_account(contract, creds) {
-        return Err(ContractError::AccountExists);
-    }
+    let primary_id = &creds.primary_id();
 
-    let account_id = creds.primary_id();
     let data = AccountData {
         address,
         credential_ids:     creds.ids()
     };
 
-    contract.accounts.insert(&account_id, &data);
-    save_credentials(contract, &account_id, &creds.secondary_ids())?;
+    contract.accounts.insert(primary_id, &data);
+    
+    for id in creds.secondary_ids().iter() {
+        ensure!(!contract.credential_ids.contains(&id), ContractError::CredentialExists);
+        contract.credential_ids.insert(id, primary_id);
+    }
+
     Ok(())
+}
+
+
+
+pub fn add_local_credentials(
+    contract:           &mut RegistryContract, 
+    primary_id:         &CredentialId,
+    account_data:       &AccountData,
+    add_credentials:    &Vec<CredentialId>
+) -> Result<Vec<CredentialId>, ContractError> {
+    ensure!(!account_data.has_credentials(add_credentials), ContractError::HasCredentials);
+    let mut new_ids : Vec<CredentialId> = Vec::with_capacity(
+        account_data.credential_ids.len() + add_credentials.len()
+    );
+    
+    new_ids.extend(account_data.credential_ids.iter().cloned());
+
+    for id in add_credentials {
+        if !contract.credential_ids.contains(&id) {
+            contract.credential_ids.insert(id, primary_id);
+        }
+        new_ids.push(id.clone());
+    }
+
+    contract.accounts.insert(primary_id, &AccountData {
+        address: account_data.address,
+        credential_ids: new_ids.clone()
+    });
+
+    Ok(new_ids)
+}
+
+
+pub fn remove_local_credentials(
+    contract:               &mut RegistryContract, 
+    primary_id:             &CredentialId,
+    account_data:           &AccountData,
+    remove_credentials:     &Vec<CredentialId>
+) -> Result<Vec<CredentialId>, ContractError> {
+    ensure!(account_data.has_credentials(remove_credentials), ContractError::HasNotCredentials);
+
+    let mut new_ids : Vec<CredentialId> = Vec::with_capacity(
+        account_data.credential_ids.len() - remove_credentials.len()
+    );
+
+    for id in remove_credentials {
+        if account_data.credential_ids.contains(&id) {
+            contract.credential_ids.remove(id);
+        } else {
+            new_ids.push(id.clone());
+        }
+    }
+
+    contract.accounts.insert(primary_id, &AccountData {
+        address: account_data.address,
+        credential_ids: new_ids.clone()
+    });
+
+    Ok(new_ids)
 }

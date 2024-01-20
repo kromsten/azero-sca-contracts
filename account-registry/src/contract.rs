@@ -4,16 +4,14 @@
 #[openbrush::implementation(Proxy, Ownable)]
 #[openbrush::contract]
 pub mod account_registry {
-    use crate::{account::{get_account, save_account, AccountData}, error::ContractError};
+    use crate::{account::{get_account, remove_local_credentials, save_account_data, add_local_credentials, AccountData}, error::ContractError};
 
     use ink::storage::Mapping;
     use openbrush::{
         contracts::{proxy, ownable}, traits::Storage
     };
     use smart_account_auth::{
-        CredentialId, 
-        CredentialData, 
-        Verifiable
+        CredentialData, CredentialId, Verifiable
     };
 
 
@@ -44,18 +42,61 @@ pub mod account_registry {
 
         #[ink(message)]
         pub fn get_account(&self, creds: CredentialData) -> Option<AccountData> {
-            creds.verify().map_err(|_| return None::<AccountId>).unwrap();
             get_account(self, &creds)
         }
 
         #[ink(message, payable)]
         pub fn create_account(&mut self, creds: CredentialData) -> Result<(), ContractError> {
             creds.verify()?;
-
             // TODO: create account and get address
             let new_account_address = AccountId::from([0x0; 32]);
 
-            save_account(self, &creds, new_account_address)
+            save_account_data(self, &creds, new_account_address)
+        }
+
+
+        #[ink(message, payable)]
+        pub fn update_credentials(
+            &mut self, 
+            auth_credentials: CredentialData,
+            add_credentials:  CredentialData
+        ) -> Result<(), ContractError> {
+            auth_credentials.verify()?;
+
+            let primary_id = &auth_credentials.primary_id();
+            let account_data = self.accounts.get(primary_id).ok_or(ContractError::AccountNotExist)?;
+
+            let _new_ids = add_local_credentials(
+                self, 
+                primary_id, 
+                &account_data, 
+                &add_credentials.secondary_ids()
+            )?;
+
+            // TODO: update account contract with new credentials
+
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn remove_credentials(
+            &mut self, 
+            auth_credentials:    CredentialData,
+            remove_credentials:  CredentialData
+        ) -> Result<(), ContractError> {
+            auth_credentials.verify()?;
+            let primary_id = &auth_credentials.primary_id();
+            let account_data = self.accounts.get(primary_id).ok_or(ContractError::AccountNotExist)?;
+
+            let _new_ids = remove_local_credentials(
+                self, 
+                primary_id, 
+                &account_data, 
+                &remove_credentials.secondary_ids()
+            )?;
+
+            // TODO: update account contract with new credentials
+            Ok(())
         }
 
 

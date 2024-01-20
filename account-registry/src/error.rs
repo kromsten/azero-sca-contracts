@@ -9,7 +9,13 @@ pub enum ContractError {
     #[error("Account doesn't exist")]
     AccountNotExist,
 
-    #[error("Credential already exists")]
+    #[error("Account already has one of provided credentials")]
+    HasCredentials,
+
+    #[error("Account doesn't have one of provided credentials")]
+    HasNotCredentials,
+
+    #[error("Credential is already linked to another account")]
     CredentialExists,
 
     #[error("The list of credentials is empty")]
