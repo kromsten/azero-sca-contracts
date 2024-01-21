@@ -1,22 +1,24 @@
-use ink::primitives::AccountId;
-use smart_account_auth::{ensure, CredentialData, CredentialId};
+use smart_account_auth::{ensure, CredentialData, CredentialId, CredentialWrapper};
 use crate::{contract::account_registry::RegistryContract, error::ContractError};
 
+use azero_smart_account::AccountContractRef as AccountRef;
 
-#[derive(scale::Decode, scale::Encode)]
+
+
+#[derive(Clone, scale::Decode, scale::Encode)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct AccountData {
-    pub address: AccountId,
+    pub account: AccountRef,
     pub credential_ids: Vec<CredentialId>
 }
 
 impl AccountData {
     pub fn new(
-        address: AccountId,
+        account: AccountRef,
         credential_ids: Vec<CredentialId>
     ) -> Self {
         Self {
-            address,
+            account,
             credential_ids
         }
     }
@@ -28,14 +30,6 @@ impl AccountData {
     }
 }
 
-impl Default for AccountData {
-    fn default() -> Self {
-        Self {
-            address: AccountId::from([0x0; 32]),
-            credential_ids: Vec::new()
-        }
-    }
-}
 
 
 pub fn get_account(contract: &RegistryContract, creds: &CredentialData) -> Option<AccountData> {
@@ -83,14 +77,14 @@ pub fn credential_exists(contract: &RegistryContract, id: &CredentialId) -> bool
 pub fn save_account_data(
     contract: &mut RegistryContract, 
     creds: &CredentialData,
-    address: AccountId
+    account: AccountRef
 ) -> Result<(), ContractError> {
     ensure!(contract.accounts.contains(&creds.primary_id()), ContractError::AccountExists);
 
     let primary_id = &creds.primary_id();
 
     let data = AccountData {
-        address,
+        account,
         credential_ids:     creds.ids()
     };
 
@@ -127,7 +121,7 @@ pub fn add_local_credentials(
     }
 
     contract.accounts.insert(primary_id, &AccountData {
-        address: account_data.address,
+        account: account_data.account.clone(),
         credential_ids: new_ids.clone()
     });
 
@@ -156,7 +150,7 @@ pub fn remove_local_credentials(
     }
 
     contract.accounts.insert(primary_id, &AccountData {
-        address: account_data.address,
+        account: account_data.account.clone(),
         credential_ids: new_ids.clone()
     });
 

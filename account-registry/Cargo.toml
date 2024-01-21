@@ -1,5 +1,5 @@
 [package]
-name = "azero_account_registry"
+name = "azero-account-registry"
 version    = "0.0.1"
 edition    = "2021"
 repository = "https://github.com/kromsten/azero-sca-contracts"
@@ -18,6 +18,10 @@ openbrush           = { git = "https://github.com/Brushfam/openbrush-contracts",
 
 smart-account-auth  = { git = "https://github.com/MegaRockLabs/smart-account-auth", features = ["substrate"]}
 
+azero-smart-account = { path = "../smart-account", default-features = false, features = ["ink-as-dependency"]}
+
+
+
 thiserror     = "1.0.50"
 
 
@@ -32,6 +36,7 @@ std = [
   "scale-info/std",
   "openbrush/std",
   "smart-account-auth/std",
+  "azero-smart-account/std",
 ]
 ink-as-dependency = []
 

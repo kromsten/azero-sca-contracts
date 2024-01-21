@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 
-#[openbrush::implementation(Proxy, Ownable)]
+#[openbrush::implementation(Ownable)]
 #[openbrush::contract]
 pub mod account_registry {
     use crate::{
@@ -20,8 +20,9 @@ pub mod account_registry {
         contracts::{proxy, ownable}, traits::Storage
     };
     use smart_account_auth::{
-        CredentialData, CredentialId, Verifiable
+        CredentialData, CredentialId, Verifiable, CredentialWrapper
     };
+    use azero_smart_account::AccountContractRef;
 
 
     #[ink(storage)] // needed for the ink! contract storage struct
@@ -33,6 +34,8 @@ pub mod account_registry {
       /// maps secondary credentials to the main one
       pub credential_ids   : Mapping<CredentialId, CredentialId>,
 
+      pub account_hash     : Hash,
+
       #[storage_field]
       proxy: proxy::Data,
       #[storage_field]
@@ -42,9 +45,8 @@ pub mod account_registry {
 
     impl RegistryContract {
         #[ink(constructor)]
-        pub fn new(forward_to: Hash) -> Self {
+        pub fn new() -> Self {
             let mut instance = Self::default();
-            proxy::Internal::_init_with_forward_to(&mut instance, forward_to);
             instance.accounts = Mapping::default();
             instance
         }
@@ -56,17 +58,20 @@ pub mod account_registry {
 
         #[ink(message, payable)]
         pub fn create_account(&mut self, creds: CredentialData) -> Result<(), ContractError> {
-            let env = self.env();
+            let verified = creds.verified_ink(&self.env())?;
 
-            if creds.with_caller.is_some() {
-                creds.with_caller_ink(&env.caller())?.verify()?;
-            } else {
-            }
-            creds.verify()?;
             // TODO: create account and get address
-            let new_account_address = AccountId::from([0x0; 32]);
+            let new_acc = AccountContractRef::new(verified.credentials.clone())
+                .code_hash(self.account_hash)
+                .endowment(0)
+                .salt_bytes([0xDE, 0xAD, 0xBE, 0xEF])
+                .instantiate();
+            
+            println!("new_acc: {:?}", new_acc);
 
-            save_account_data(self, &creds, new_account_address)
+            save_account_data(self, &verified, new_acc)?;
+
+            Ok(())
         }
 
 
@@ -88,6 +93,7 @@ pub mod account_registry {
                 &add_credentials.secondary_ids()
             )?;
 
+            //AccountContractRef::forward()?;
             // TODO: update account contract with new credentials
 
             Ok(())
@@ -114,10 +120,5 @@ pub mod account_registry {
             Ok(())
         }
 
-
-        #[ink(message, payable, selector = _)]
-        pub fn forward(&self) {
-            proxy::Internal::_fallback(self)
-        }
     }
 }

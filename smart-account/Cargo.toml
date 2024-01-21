@@ -1,5 +1,5 @@
 [package]
-name = "azero_smart_account"
+name = "azero-smart-account"
 version    = "0.0.1"
 edition    = "2021"
 repository = "https://github.com/kromsten/azero-sca-contracts"
@@ -22,7 +22,8 @@ thiserror     = "1.0.50"
 
 
 [lib]
-path = "lib.rs"
+path = "src/lib.rs"
+
 
 [features]
 default = ["std"]
