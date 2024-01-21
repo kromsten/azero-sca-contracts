@@ -5,7 +5,7 @@ use azero_smart_account::AccountContractRef as AccountRef;
 
 
 
-#[derive(Clone, scale::Decode, scale::Encode)]
+#[derive(Clone, PartialEq, Debug, scale::Decode, scale::Encode)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout))]
 pub struct AccountData {
     pub account: AccountRef,
@@ -33,6 +33,12 @@ impl AccountData {
 
 
 pub fn get_account(contract: &RegistryContract, creds: &CredentialData) -> Option<AccountData> {
+
+    if creds.credentials.is_empty() {
+        return None;
+    }
+
+
     let data =  contract.accounts.get(&creds.primary_id());
     if data.is_some() {
         return data;

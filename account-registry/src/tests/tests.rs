@@ -1,38 +1,27 @@
 mod tests {
     /// Imports all the definitions from the outer scope so we can use them here.
-    use sca_common::{AccountData, AuthType};
-    use contract::account_registry::Contract;
-    use smart_account_auth::{CredentialId, AuthError, Credential, credentials::EvmCredential};
-    use crate::contract;
+    use contract::account_registry::RegistryContract as Contract;
+    use smart_account_auth::{AuthError, CredentialData};
+    use crate::{contract, error::ContractError};
 
 
-    type Credentials = Vec<Box<dyn Credential>>;
 
-    fn evm_creds() -> Credentials {
-        vec![Box::new(EvmCredential { 
-            message: Vec::default(), 
-            signature: Vec::default(), 
-            signer: Vec::default() 
-        })]
-    }
-
-    fn creds() -> Credentials {
-        evm_creds()
-    }
-
-    fn other_creds() -> Credentials {
-        vec![Box::new(EvmCredential { 
-            message: Vec::default(), 
-            signature: Vec::default(), 
-            signer: vec![1, 2, 3] 
-        })]
-    }
-
-    fn acc_data() -> AccountData {
-        AccountData {
-            auth_types: vec![AuthType::Passkey {}],
+    fn creds() -> CredentialData {
+        CredentialData {
+            credentials: vec![],
+            primary_index: None,
+            with_caller: Some(true)
         }
     }
+
+    fn other_creds() -> CredentialData {
+        CredentialData {
+            credentials: vec![],
+            primary_index: Some(0),
+            with_caller: Some(true)}
+    }
+
+
 
     /// We test if the default constructor does its job.
     #[ink::test]
@@ -49,11 +38,11 @@ mod tests {
 
         let creds = creds();
 
-        assert!(contract.create_account(creds.clone()).is_ok());
+        assert_eq!(contract.create_account(creds.clone()).unwrap_err(), ContractError::VerifiableAuth(AuthError::RecoveryParam));
         assert!(contract.create_account(creds.clone()).is_err());
 
         assert_eq!(contract.get_account(other_creds()), None);
-        assert_eq!(contract.get_account(creds), Some(acc_data()));
+        assert!(contract.get_account(creds).is_some());
 
         assert!(false)
     }

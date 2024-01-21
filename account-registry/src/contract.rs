@@ -53,13 +53,18 @@ pub mod account_registry {
 
         #[ink(message)]
         pub fn get_account(&self, creds: CredentialData) -> Option<AccountData> {
-            get_account(self, &creds)
+            if creds.with_caller.is_some() && creds.with_caller.unwrap() {
+                get_account(self, &creds.with_caller_ink(&self.env().caller()))
+            } else {
+                get_account(self, &creds)
+            }
         }
 
         #[ink(message, payable)]
         pub fn create_account(&mut self, creds: CredentialData) -> Result<(), ContractError> {
-            let verified = creds.verified_ink(&self.env())?;
 
+            let verified = creds.verified_ink(&self.env())?;
+            
             // TODO: create account and get address
             let new_acc = AccountContractRef::new(verified.credentials.clone())
                 .code_hash(self.account_hash)
@@ -67,8 +72,6 @@ pub mod account_registry {
                 .salt_bytes([0xDE, 0xAD, 0xBE, 0xEF])
                 .instantiate();
             
-            println!("new_acc: {:?}", new_acc);
-
             save_account_data(self, &verified, new_acc)?;
 
             Ok(())
