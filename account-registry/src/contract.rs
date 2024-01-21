@@ -4,7 +4,16 @@
 #[openbrush::implementation(Proxy, Ownable)]
 #[openbrush::contract]
 pub mod account_registry {
-    use crate::{account::{get_account, remove_local_credentials, save_account_data, add_local_credentials, AccountData}, error::ContractError};
+    use crate::{
+        account::{
+            AccountData,
+            get_account, 
+            save_account_data, 
+            add_local_credentials, 
+            remove_local_credentials, 
+        }, 
+        error::ContractError
+    };
 
     use ink::storage::Mapping;
     use openbrush::{
@@ -47,6 +56,12 @@ pub mod account_registry {
 
         #[ink(message, payable)]
         pub fn create_account(&mut self, creds: CredentialData) -> Result<(), ContractError> {
+            let env = self.env();
+
+            if creds.with_caller.is_some() {
+                creds.with_caller_ink(&env.caller())?.verify()?;
+            } else {
+            }
             creds.verify()?;
             // TODO: create account and get address
             let new_account_address = AccountId::from([0x0; 32]);
