@@ -4,9 +4,9 @@
 #[openbrush::contract]
 pub mod abstract_account {
   use ink::env::{call::{build_call, ExecutionInput}, CallFlags};
-  use openbrush::traits::Storage;
+  use openbrush::{modifiers, traits::Storage};
   use scale::Output;
-  use smart_account_auth::Credentials;
+  use smart_account_auth::{CredentialData, Credentials, Verifiable};
   use openbrush::contracts::ownable::*;
 
   use crate::error::ContractError;
@@ -69,46 +69,62 @@ pub mod abstract_account {
   
   impl AccountContract {
     #[ink(constructor)]
-    pub fn new(creds: Credentials) -> Self {
+    pub fn new(creds: CredentialData) -> Self {
         let mut instance = Self::default();
-
-        instance.credentials = creds;
+        instance.credentials = creds.credentials;
         ownable::Internal::_init_with_owner(&mut instance, Self::env().caller());
         instance
     }
 
-      #[ink(message, payable)]
-      pub fn invoke_transaction(
-          &mut self,
-          credentials: Credentials,
-          tranasction : Transaction
-      ) -> Result<(), ContractError> {
-          // TODO: verify
+    #[modifiers(only_owner)]
+    pub fn update_credentials(&mut self, creds: CredentialData) -> Result<(), ContractError> {
+        self.credentials = creds.credentials;
+        Ok(())
+    }
 
-          let t = tranasction;
 
-          let result = build_call::<<Self as ::ink::env::ContractEnv>::Env>()
-              .call(t.callee)
-              .gas_limit(t.gas_limit)
-              .transferred_value(self.env().transferred_value())
-              .call_flags(CallFlags::default().set_allow_reentry(t.allow_reentry))
-              .exec_input(
-                  ExecutionInput::new(t.selector.into()).push_arg(CallInput(&t.input)),
-              )
-              .returns::<()>()
-              .try_invoke();
+    pub fn get_credentials(&self) -> Credentials {
+        self.credentials.clone()
+    }
 
-          let result = match result {
-              Ok(Ok(_)) => Ok(()),
-              _ => Err(ContractError::TransactionFailed),
-          };
 
-          self.env().emit_event(Execution {
-              result: result.clone().map(|_| None),
-          });
-          
-          result
-      }
+    #[ink(message, payable)]
+    pub fn invoke_transaction(
+        &mut self,
+        creds: CredentialData,
+        tranasction : Transaction
+    ) -> Result<(), ContractError> {
+
+        if creds.credentials.iter().any(|c| !self.credentials.contains(c)) {
+            return Err(ContractError::Unauthorized("Not valid credentials".to_string()));
+        }
+
+        creds.verified_ink(self.env())?;
+
+        let t = tranasction;
+
+        let result = build_call::<<Self as ::ink::env::ContractEnv>::Env>()
+            .call(t.callee)
+            .gas_limit(t.gas_limit)
+            .transferred_value(self.env().transferred_value())
+            .call_flags(CallFlags::default().set_allow_reentry(t.allow_reentry))
+            .exec_input(
+                ExecutionInput::new(t.selector.into()).push_arg(CallInput(&t.input)),
+            )
+            .returns::<()>()
+            .try_invoke();
+
+        let result = match result {
+            Ok(Ok(_)) => Ok(()),
+            _ => Err(ContractError::TransactionFailed),
+        };
+
+        self.env().emit_event(Execution {
+            result: result.clone().map(|_| None),
+        });
+        
+        result
+    }
 
 
   }

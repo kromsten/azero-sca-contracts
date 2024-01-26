@@ -62,7 +62,7 @@ pub mod account_registry {
             let verified = creds.verified_ink(self.env())?;
 
             // TODO: create account and get address
-            let new_acc = AccountContractRef::new(verified.credentials.clone())
+            let new_acc = AccountContractRef::new(verified.clone())
                 .code_hash(account_hash)
                 .endowment(0)
                 .salt_bytes([0xDE, 0xAD, 0xBE, 0xEF])
