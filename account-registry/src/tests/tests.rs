@@ -1,6 +1,7 @@
 mod tests {
     /// Imports all the definitions from the outer scope so we can use them here.
     use contract::account_registry::RegistryContract as Contract;
+    use ink::primitives::Hash;
     use smart_account_auth::{AuthError, CredentialData};
     use crate::{contract, error::ContractError};
 
@@ -38,8 +39,10 @@ mod tests {
 
         let creds = creds();
 
-        assert_eq!(contract.create_account(creds.clone()).unwrap_err(), ContractError::VerifiableAuth(AuthError::RecoveryParam));
-        assert!(contract.create_account(creds.clone()).is_err());
+        let hash = Hash::default();
+
+        assert_eq!(contract.create_account(creds.clone(), hash.clone()).unwrap_err(), ContractError::VerifiableAuth(AuthError::RecoveryParam));
+        assert!(contract.create_account(creds.clone(), hash).is_err());
 
         assert_eq!(contract.get_account(other_creds()), None);
         assert!(contract.get_account(creds).is_some());

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Debug, PartialEq, scale::Encode, scale::Decode, Error)]
+#[derive(Debug, PartialEq, Clone, scale::Encode, scale::Decode, Error)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
 pub enum ContractError {
     #[error("Account already exists")]
@@ -14,6 +14,9 @@ pub enum ContractError {
 
     #[error("The list of credentials is empty")]
     NoCredentials,
+
+    #[error("Transaction failed")]
+    TransactionFailed,
 
     #[error("{0}")]
     VerifiableAuth(#[from] smart_account_auth::AuthError),

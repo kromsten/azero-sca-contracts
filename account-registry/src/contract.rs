@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 
-#[openbrush::implementation(Ownable)]
+#[openbrush::implementation()]
 #[openbrush::contract]
 pub mod account_registry {
     use crate::{
@@ -16,11 +16,9 @@ pub mod account_registry {
     };
 
     use ink::storage::Mapping;
-    use openbrush::{
-        contracts::{proxy, ownable}, traits::Storage
-    };
+    use openbrush::traits::Storage;
     use smart_account_auth::{
-        CredentialData, CredentialId, Verifiable, CredentialWrapper
+        CredentialData, CredentialId, Verifiable, CredentialsWrapper
     };
     use azero_smart_account::AccountContractRef;
 
@@ -33,13 +31,6 @@ pub mod account_registry {
       pub accounts         : Mapping<CredentialId, AccountData>,
       /// maps secondary credentials to the main one
       pub credential_ids   : Mapping<CredentialId, CredentialId>,
-
-      pub account_hash     : Hash,
-
-      #[storage_field]
-      proxy: proxy::Data,
-      #[storage_field]
-      ownable: ownable::Data
     }
 
 
@@ -51,6 +42,7 @@ pub mod account_registry {
             instance
         }
 
+
         #[ink(message)]
         pub fn get_account(&self, creds: CredentialData) -> Option<AccountData> {
             if creds.with_caller.is_some() && creds.with_caller.unwrap() {
@@ -61,13 +53,17 @@ pub mod account_registry {
         }
 
         #[ink(message, payable)]
-        pub fn create_account(&mut self, creds: CredentialData) -> Result<(), ContractError> {
+        pub fn create_account(
+            &mut self, 
+            creds: CredentialData,
+            account_hash: Hash
+        ) -> Result<(), ContractError> {
 
-            let verified = creds.verified_ink(&self.env())?;
-            
+            let verified = creds.verified_ink(self.env())?;
+
             // TODO: create account and get address
             let new_acc = AccountContractRef::new(verified.credentials.clone())
-                .code_hash(self.account_hash)
+                .code_hash(account_hash)
                 .endowment(0)
                 .salt_bytes([0xDE, 0xAD, 0xBE, 0xEF])
                 .instantiate();
