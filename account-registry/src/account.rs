@@ -88,14 +88,12 @@ pub fn save_account_data(
     ensure!(contract.accounts.contains(&creds.primary_id()), ContractError::AccountExists);
 
     let primary_id = &creds.primary_id();
-
     let data = AccountData {
         account,
         credential_ids:     creds.ids()
     };
 
     contract.accounts.insert(primary_id, &data);
-    
     for id in creds.secondary_ids().iter() {
         ensure!(!contract.credential_ids.contains(&id), ContractError::CredentialExists);
         contract.credential_ids.insert(id, primary_id);

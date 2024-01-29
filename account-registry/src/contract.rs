@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
-
 #[openbrush::implementation()]
 #[openbrush::contract]
 pub mod account_registry {

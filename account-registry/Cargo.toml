@@ -17,7 +17,6 @@ openbrush           = { git = "https://github.com/Brushfam/openbrush-contracts",
 ]}
 
 smart-account-auth  = { git = "https://github.com/MegaRockLabs/smart-account-auth", features = ["substrate"]}
-
 azero-smart-account = { path = "../smart-account", default-features = false, features = ["ink-as-dependency"]}
 
 

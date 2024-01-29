@@ -15,7 +15,6 @@ pub mod abstract_account {
 
   #[ink(event)]
     pub struct Execution {
-
         /// Indicates whether the transaction executed successfully. If so the `Ok` value
         /// holds the output in bytes. The Option is `None` when the transaction
         /// was executed through `invoke_transaction` rather than
@@ -36,16 +35,20 @@ pub mod abstract_account {
       scale_info::TypeInfo, ink::storage::traits::StorageLayout
   ))]
   pub struct Transaction {
+
     /// The `AccountId` of the contract that is called in this transaction.
     pub callee: AccountId,
+
     /// The selector bytes that identifies the function of the callee that should be
     /// called.
     pub selector: [u8; 4],
+
     /// The SCALE encoded parameters that are passed to the called function.
     pub input: Vec<u8>,
 
     /// Gas limit for the execution of the call.
     pub gas_limit: u64,
+
     /// If set to true the transaction will be allowed to re-enter the multisig
     /// contract. Re-entrancy can lead to vulnerabilities. Use at your own
     /// risk.
