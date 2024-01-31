@@ -6,9 +6,12 @@ pub mod abstract_account {
   use ink::env::{call::{build_call, ExecutionInput}, CallFlags};
   use openbrush::{modifiers, traits::Storage};
   use scale::Output;
-  use smart_account_auth::{CredentialData, Credentials, Verifiable};
+  use saa::{CredentialData, Credentials, Verifiable};
   use openbrush::contracts::ownable::*;
 
+  use ink::prelude::vec::Vec;
+
+  
   use crate::error::ContractError;
   
   // type TransactionId = u32;
@@ -99,7 +102,7 @@ pub mod abstract_account {
     ) -> Result<(), ContractError> {
 
         if creds.credentials.iter().any(|c| !self.credentials.contains(c)) {
-            return Err(ContractError::Unauthorized("Not valid credentials".to_string()));
+            return Err(ContractError::Unauthorized("Not valid credentials".into()));
         }
 
         creds.verified_ink(self.env())?;

@@ -1,8 +1,7 @@
-use smart_account_auth::{ensure, CredentialData, CredentialId, CredentialsWrapper};
 use crate::{contract::account_registry::RegistryContract, error::ContractError};
-
+use smart_account_auth::{ensure, CredentialData, CredentialId, CredentialsWrapper};
 use azero_smart_account::AccountContractRef as AccountRef;
-
+use ink::prelude::vec::Vec;
 
 
 #[derive(Clone, PartialEq, Debug, scale::Decode, scale::Encode)]

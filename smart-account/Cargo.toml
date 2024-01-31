@@ -5,20 +5,32 @@ edition    = "2021"
 repository = "https://github.com/kromsten/azero-sca-contracts"
 authors    = ["kromsten <kromsten@megarock.labs>"]
 
-[dependencies]
-ink                 = { version = "4.3.0", default-features = false}
-scale               = { version = "3.6.9", package = "parity-scale-codec", default-features = false, features = ["derive"] }
-scale-info          = { version = "2.10.0", default-features = false, features = ["derive"], optional = true }
-openbrush           = { git = "https://github.com/Brushfam/openbrush-contracts", branch = "develop", default-features = false, features = [
-    "proxy", 
-    "upgradeable", 
-    "crypto", 
-    "ownable"
-]}
+[dependencies.ink]
+version          = "4.3.0"
+default-features = false
 
-smart-account-auth  = { git = "https://github.com/MegaRockLabs/smart-account-auth", features = ["substrate"]}
+[dependencies.scale]
+version          = "3.6.9"
+package          = "parity-scale-codec"
+default-features = false
+features         = ["derive"]
 
-thiserror     = "1.0.50"
+[dependencies.scale-info]
+version          = "2.10.0"
+default-features = false
+
+
+[dependencies.openbrush]
+git              = "https://github.com/Brushfam/openbrush-contracts"
+tag              = "4.0.0"
+default-features = false
+features         = ["ownable"]
+
+[dependencies.saa]
+git              = "https://github.com/MegaRockLabs/smart-account-auth"
+package          = "smart-account-auth"
+default-features = false
+features         = ["substrate"]
 
 
 [lib]
@@ -32,8 +44,7 @@ std = [
   "scale/std",
   "scale-info/std",
   "openbrush/std",
-  "smart-account-auth/std",
-
+  "saa/std",
 ]
 ink-as-dependency = []
 

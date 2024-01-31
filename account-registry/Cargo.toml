@@ -20,10 +20,6 @@ smart-account-auth  = { git = "https://github.com/MegaRockLabs/smart-account-aut
 azero-smart-account = { path = "../smart-account", default-features = false, features = ["ink-as-dependency"]}
 
 
-
-thiserror     = "1.0.50"
-
-
 [lib]
 path = "src/lib.rs"
 

@@ -1,5 +1,3 @@
-#![cfg_attr(not(feature = "std"), no_std, no_main)]
-
 #[openbrush::implementation()]
 #[openbrush::contract]
 pub mod account_registry {
@@ -13,6 +11,7 @@ pub mod account_registry {
         }, 
         error::ContractError
     };
+
 
     use ink::storage::Mapping;
     use openbrush::traits::Storage;
